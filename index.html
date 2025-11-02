@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday, Papa!</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdf2f8; /* Light pink background */
+        }
+        h1 {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Flame animation */
+        @keyframes flicker {
+            0%, 100% { transform: scaleY(1) translateY(0); opacity: 1; }
+            50% { transform: scaleY(1.1) translateY(-2px); opacity: 0.8; }
+        }
+        .flame {
+            animation: flicker 1.5s infinite alternate;
+            transform-origin: bottom;
+        }
+
+        /* Message fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        /* Mic level bar */
+        #micLevel {
+            transition: width 0.1s ease-out;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white w-full max-w-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center">
+        
+        <h1 class="text-4xl font-bold text-rose-700 mb-6">Happy Birthday, Papa!</h1>
+
+        <!-- Instructions will change based on state -->
+        <p id="instructions" class="text-lg text-gray-600 mb-4">
+            Click the button below to light the candles!
+        </p>
+
+        <!-- Mic Level Visualizer -->
+        <div class="w-full bg-gray-200 rounded-full h-4 mb-4 hidden" id="micLevelContainer">
+            <div id="micLevel" class="bg-blue-500 h-4 rounded-full" style="width: 0%"></div>
+        </div>
+
+        <!-- Cake SVG Container -->
+        <div id="cakeContainer" class="relative my-8">
+            <!-- Whole Cake SVG -->
+            <svg id="cakeWhole" viewBox="0 0 200 180" class="w-2/3 mx-auto">
+                <!-- Cake Layers -->
+                <path d="M 20 170 Q 100 200, 180 170 L 180 160 Q 100 190, 20 160 Z" fill="#D2B48C" /> <!-- Plate -->
+                <path d="M 30 160 Q 100 190, 170 160 L 170 130 Q 100 160, 30 130 Z" fill="#6B4226" /> <!-- Bottom Layer -->
+                <path d="M 30 130 Q 100 160, 170 130 L 170 100 Q 100 130, 30 100 Z" fill="#8B5A2B" /> <!-- Middle Layer -->
+                <path d="M 30 100 Q 100 130, 170 100 L 170 70 Q 100 100, 30 70 Z" fill="#A06A3B" /> <!-- Top Layer -->
+                
+                <!-- Icing -->
+                <path d="M 30 70 Q 40 80, 50 70 Q 60 80, 70 70 Q 80 80, 90 70 Q 100 80, 110 70 Q 120 80, 130 70 Q 140 80, 150 70 Q 160 80, 170 70 L 170 60 Q 100 90, 30 60 Z" fill="#F8C8DC" />
+                
+                <!-- Candles -->
+                <rect x="65" y="30" width="8" height="30" rx="4" fill="#F44336" />
+                <rect x="96" y="25" width="8" height="35" rx="4" fill="#3F51B5" />
+                <rect x="127" y="30" width="8" height="30" rx="4" fill="#FFEB3B" />
+                
+                <!-- Flames (This group will be hidden) -->
+                <g id="flames">
+                    <path class="flame" d="M 69 30 Q 69 20, 65 22 Q 69 15, 73 22 Q 69 20, 69 30 Z" fill="#FF9800" />
+                    <path class="flame" style="animation-delay: -0.5s;" d="M 100 25 Q 100 15, 96 17 Q 100 10, 104 17 Q 100 15, 100 25 Z" fill="#FF9800" />
+                    <path class="flame" style="animation-delay: -1s;" d="M 131 30 Q 131 20, 127 22 Q 131 15, 135 22 Q 131 20, 131 30 Z" fill="#FF9800" />
+                </g>
+
+                <!-- Cut Lines (Hidden by default) -->
+                <g id="cutLines" style="display: none;" stroke="black" stroke-width="2" stroke-dasharray="4">
+                    <path d="M 100 50 L 100 170" />
+                    <path d="M 50 70 L 150 150" />
+                </g>
+
+                <!-- Text on Cake -->
+                <text x="100" y="130" font-family="Playfair Display, serif" font-size="16" fill="#FFFFFF" text-anchor="middle" font-weight="bold">Happy Birthday</text>
+                <text x="100" y="150" font-family="Playfair Display, serif" font-size="16" fill="#FFFFFF" text-anchor="middle" font-weight="bold">Papa</text>
+            </svg>
+        </div>
+
+        <!-- Buttons -->
+        <div id="buttonContainer" class="flex flex-col items-center">
+            <!-- Start Button (Initial) -->
+            <button id="startButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                Start!
+            </button>
+            
+            <!-- Cut Cake Button (Hidden) -->
+            <button id="cutButton" class="hidden bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                Cut the Cake!
+            </button>
+        </div>
+
+        <!-- Birthday Message (Hidden) -->
+        <div id="birthdayMessage" class="hidden mt-8">
+            <div class="bg-gray-100 p-6 rounded-lg shadow-inner">
+                <p class="text-lg text-gray-800 text-left leading-relaxed">
+                    Happy birthday to the best papa in the whole world. Thank you so much for everything you do for us, from managing our tantrums to managing our problems, you have always been there. We love you papa, you are our greatest inspiration.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM Elements
+        const startButton = document.getElementById('startButton');
+        const cutButton = document.getElementById('cutButton');
+        const flames = document.getElementById('flames');
+        const cakeWhole = document.getElementById('cakeWhole');
+        const cutLines = document.getElementById('cutLines');
+        const birthdayMessage = document.getElementById('birthdayMessage');
+        const instructions = document.getElementById('instructions');
+        const micLevelContainer = document.getElementById('micLevelContainer');
+        const micLevel = document.getElementById('micLevel');
+
+        // Audio state
+        let audioContext;
+        let analyser;
+        let dataArray;
+        let mediaStream;
+        let areCandlesLit = true;
+
+        // --- 1. Start Button: Initialize Audio ---
+        startButton.addEventListener('click', initAudio);
+
+        async function initAudio() {
+            try {
+                // Get microphone access
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Set up audio processing
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(mediaStream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                // Update UI
+                startButton.classList.add('hidden');
+                instructions.textContent = 'Now, blow out the candles!';
+                micLevelContainer.classList.remove('hidden');
+
+                // Start checking mic level
+                checkMicLevel();
+
+            } catch (err) {
+                console.error("Error accessing microphone:", err);
+                instructions.textContent = 'Could not access microphone. Please allow permission and refresh.';
+                instructions.classList.add('text-red-500');
+            }
+        }
+
+        // --- 2. Check Mic Level ---
+        function checkMicLevel() {
+            if (!areCandlesLit) return; // Stop checking if candles are out
+
+            // Request animation frame for smooth looping
+            requestAnimationFrame(checkMicLevel);
+
+            analyser.getByteFrequencyData(dataArray);
+            
+            let sum = 0;
+            for (const value of dataArray) {
+                sum += value;
+            }
+            const avgVolume = sum / dataArray.length;
+
+            // Update the visualizer bar
+            // We multiply by 1.5 to make it more sensitive
+            micLevel.style.width = Math.min(100, avgVolume * 1.5) + '%'; 
+
+            // Set the "blow" threshold. You may need to adjust this value.
+            const blowThreshold = 55; 
+
+            if (avgVolume > blowThreshold) {
+                blowOutCandles();
+            }
+        }
+
+        // --- 3. Blow Out Candles ---
+        function blowOutCandles() {
+            if (!areCandlesLit) return; // Ensure this only runs once
+            
+            areCandlesLit = false;
+            
+            // Hide flames with a fade-out effect
+            flames.style.transition = 'opacity 0.5s';
+            flames.style.opacity = '0';
+
+            // After fade-out, hide completely and show cut button
+            setTimeout(() => {
+                flames.style.display = 'none';
+                instructions.textContent = 'Great job! Now, cut the cake!';
+                cutButton.classList.remove('hidden');
+                micLevelContainer.classList.add('hidden');
+            }, 500);
+
+            // Clean up audio resources
+            if (audioContext) {
+                audioContext.close();
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        // --- 4. Cut the Cake ---
+        cutButton.addEventListener('click', cutTheCake);
+
+        function cutTheCake() {
+            // Show the "cut lines"
+            cutLines.style.display = 'block';
+            
+            // Add a pulsing animation to simulate "cutting"
+            cakeWhole.classList.add('animate-pulse');
+            
+            // Hide buttons and update instructions
+            cutButton.classList.add('hidden');
+            instructions.textContent = '...';
+
+            // After a short delay, hide the cake and show the message
+            setTimeout(() => {
+                cakeWhole.style.display = 'none';
+                instructions.style.display = 'none';
+                birthdayMessage.classList.remove('hidden');
+                birthdayMessage.classList.add('animate-fade-in'); // Trigger fade-in
+            }, 1200); // Wait for the pulse animation
+        }
+
+    </script>
+</body>
+</html>
