@@ -6,48 +6,21 @@
     <title>Happy Birthday, Papa!</title>
     <!-- Load Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load canvas-confetti library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <!-- Load Inter font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    <style>
-        /* Custom styles */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #fdf2f8; /* Light pink background */
-        }
-        h1 {
-            font-family: 'Playfair Display', serif;
-        }
-
-        /* Flame animation */
-        @keyframes flicker {
-            0%, 100% { transform: scaleY(1) translateY(0); opacity: 1; }
-            50% { transform: scaleY(1.1) translateY(-2px); opacity: 0.8; }
-        }
-        .flame {
-            animation: flicker 1.5s infinite alternate;
-            transform-origin: bottom;
-        }
-
-        /* Message fade-in animation */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 1s ease-out forwards;
-        }
-
-        /* Mic level bar */
-        #micLevel {
-            transition: width 0.1s ease-out;
-        }
-    </style>
+    <!-- Link to your custom stylesheet -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-white w-full max-w-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center">
+    <!-- Canvas for confetti -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="bg-white w-full max-w-lg p-6 sm:p-10 rounded-2xl shadow-2xl text-center z-10 relative">
         
         <h1 class="text-4xl font-bold text-rose-700 mb-6">Happy Birthday, Papa!</h1>
 
@@ -122,134 +95,16 @@
 
     </div>
 
-    <script>
-        // DOM Elements
-        const startButton = document.getElementById('startButton');
-        const cutButton = document.getElementById('cutButton');
-        const flames = document.getElementById('flames');
-        const cakeWhole = document.getElementById('cakeWhole');
-        const cutLines = document.getElementById('cutLines');
-        const birthdayMessage = document.getElementById('birthdayMessage');
-        const instructions = document.getElementById('instructions');
-        const micLevelContainer = document.getElementById('micLevelContainer');
-        const micLevel = document.getElementById('micLevel');
-
-        // Audio state
-        let audioContext;
-        let analyser;
-        let dataArray;
-        let mediaStream;
-        let areCandlesLit = true;
-
-        // --- 1. Start Button: Initialize Audio ---
-        startButton.addEventListener('click', initAudio);
-
-        async function initAudio() {
-            try {
-                // Get microphone access
-                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // Set up audio processing
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioContext.createMediaStreamSource(mediaStream);
-                analyser = audioContext.createAnalyser();
-                analyser.fftSize = 256;
-                source.connect(analyser);
-
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-                // Update UI
-                startButton.classList.add('hidden');
-                instructions.textContent = 'Now, blow out the candles!';
-                micLevelContainer.classList.remove('hidden');
-
-                // Start checking mic level
-                checkMicLevel();
-
-            } catch (err) {
-                console.error("Error accessing microphone:", err);
-                instructions.textContent = 'Could not access microphone. Please allow permission and refresh.';
-                instructions.classList.add('text-red-500');
-            }
-        }
-
-        // --- 2. Check Mic Level ---
-        function checkMicLevel() {
-            if (!areCandlesLit) return; // Stop checking if candles are out
-
-            // Request animation frame for smooth looping
-            requestAnimationFrame(checkMicLevel);
-
-            analyser.getByteFrequencyData(dataArray);
-            
-            let sum = 0;
-            for (const value of dataArray) {
-                sum += value;
-            }
-            const avgVolume = sum / dataArray.length;
-
-            // Update the visualizer bar
-            // We multiply by 1.5 to make it more sensitive
-            micLevel.style.width = Math.min(100, avgVolume * 1.5) + '%'; 
-
-            // Set the "blow" threshold. You may need to adjust this value.
-            const blowThreshold = 55; 
-
-            if (avgVolume > blowThreshold) {
-                blowOutCandles();
-            }
-        }
-
-        // --- 3. Blow Out Candles ---
-        function blowOutCandles() {
-            if (!areCandlesLit) return; // Ensure this only runs once
-            
-            areCandlesLit = false;
-            
-            // Hide flames with a fade-out effect
-            flames.style.transition = 'opacity 0.5s';
-            flames.style.opacity = '0';
-
-            // After fade-out, hide completely and show cut button
-            setTimeout(() => {
-                flames.style.display = 'none';
-                instructions.textContent = 'Great job! Now, cut the cake!';
-                cutButton.classList.remove('hidden');
-                micLevelContainer.classList.add('hidden');
-            }, 500);
-
-            // Clean up audio resources
-            if (audioContext) {
-                audioContext.close();
-            }
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-            }
-        }
-
-        // --- 4. Cut the Cake ---
-        cutButton.addEventListener('click', cutTheCake);
-
-        function cutTheCake() {
-            // Show the "cut lines"
-            cutLines.style.display = 'block';
-            
-            // Add a pulsing animation to simulate "cutting"
-            cakeWhole.classList.add('animate-pulse');
-            
-            // Hide buttons and update instructions
-            cutButton.classList.add('hidden');
-            instructions.textContent = '...';
-
-            // After a short delay, hide the cake and show the message
-            setTimeout(() => {
-                cakeWhole.style.display = 'none';
-                instructions.style.display = 'none';
-                birthdayMessage.classList.remove('hidden');
-                birthdayMessage.classList.add('animate-fade-in'); // Trigger fade-in
-            }, 1200); // Wait for the pulse animation
-        }
-
-    </script>
+    <!-- Link to your JavaScript file -->
+    <!-- 'defer' makes sure the script runs after the HTML is loaded -->
+    <script src="script.js" defer></script>
 </body>
 </html>
+
+
+        
+
+    
+
+      
+     
